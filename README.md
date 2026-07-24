@@ -88,14 +88,14 @@ The ROS message definitions used by the simulator are stored in
 with the project. The repository is a self-contained simulator product with
 its complete ROS message interface.
 
-Controller-development (`*_no_pp.launch`) launches run the simulator and
-centerline publisher. To drive the car, add a control node that subscribes to
-`/dv_board/control`.
+Event launch files run only the simulator and do not depend on SLAM, path
+planning or control packages. The `*_no_pp.launch` variants additionally
+publish the known centerline for controller development. To drive the car,
+add a control node that subscribes to `/dv_board/control`.
 
-Perception-pipeline launches additionally require:
-
-- `dv_slam`
-- `dv_path_planning`
+`dv_slam` and `dv_path_planning` are optional consumers of the simulated
+sensor output. Install and start them separately only when running the full
+autonomous stack.
 
 ## Setup workspace
 
@@ -163,14 +163,29 @@ roslaunch lem_simulator fsg_2019_no_pp.launch
 This standalone mode does not start a controller. The vehicle remains
 stationary until another node publishes commands on `/dv_board/control`.
 
-Run the simulator with perception → SLAM → path planning:
+Run the simulator with its configured camera, lidar or fused cone perception:
 
 ```bash
 roslaunch lem_simulator fsg_2019.launch
 ```
 
-This mode requires `dv_slam` and `dv_path_planning` in the same workspace.
-Start a controller separately only when closed-loop driving is needed.
+This command starts only the simulator. It publishes perceived cones on
+`/dv_cone_detector/cones` and does not require `dv_slam` or
+`dv_path_planning`.
+
+For a complete autonomous stack, install the SLAM and path-planning packages
+in the workspace and start each component separately:
+
+```bash
+roslaunch lem_simulator fsg_2019.launch
+roslaunch dv_slam slam.launch
+roslaunch dv_path_planning path_planning.launch mission:=trackdrive
+```
+
+SLAM consumes the simulated perception output, and path planning consumes the
+result produced by SLAM; neither package is a dependency of the simulator.
+Start a controller as another separate process when closed-loop driving is
+needed.
 
 Useful RViz data:
 
@@ -226,12 +241,13 @@ flows in more detail.
 
 ## Events and launch files
 
-Every event has two entry points. Neither one starts a controller:
+Every event has two simulator entry points. Neither one starts SLAM, path
+planning or a controller:
 
-- `<event>.launch` runs simulator, SLAM and path planning;
+- `<event>.launch` runs the simulator with simulated cone perception;
 - `<event>_no_pp.launch` runs simulator and centerline publisher.
 
-| Event | Perception pipeline | No path planning | Initial pose `(x_m, y_m, yaw_rad)` |
+| Event | Simulator perception | Known centerline | Initial pose `(x_m, y_m, yaw_rad)` |
 |---|---|---|---|
 | Acceleration 150 m | `acc.launch` | `acc_no_pp.launch` | `(0, 0, 0)` |
 | Skidpad | `skidpad.launch` | `skidpad_no_pp.launch` | `(0, -15, 1.570796)` |
@@ -338,7 +354,7 @@ lem_simulator/
 ├── docs/                      model documentation and figures
 ├── include/                   model and runtime interfaces
 ├── interfaces/dv_interfaces/  project ROS message definitions
-├── launch/                    full-pipeline and no-PP launchers
+├── launch/                    simulator and known-centerline launchers
 ├── logs/                      generated ride metrics
 ├── src_helpers/               dynamics, sensor and helper implementations
 ├── tracks/                    four curated cone maps and centerlines
@@ -350,7 +366,7 @@ lem_simulator/
 
 1. Add `tracks/my_event_cones.csv` with columns `x,y,color`.
 2. Add `tracks/my_event_centerline.csv` with columns `x,y`.
-3. Copy one full and one `_no_pp` launch file.
+3. Copy one simulator and one `_no_pp` launch file.
 4. Set `initial_x_m`, `initial_y_m` and `initial_yaw_rad`.
 5. Pass the same centerline to `_simulator.launch` for internal metrics.
 6. Validate the initial pose before enabling control.

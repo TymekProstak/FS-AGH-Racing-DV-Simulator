@@ -12,8 +12,4 @@
     <arg name="initial_yaw_rad" value="0.0"/>
   </include>
 
-  <include file="$(find dv_slam)/launch/slam.launch"/>
-  <include file="$(find dv_path_planning)/launch/path_planning.launch">
-    <arg name="mission" value="trackdrive"/>
-  </include>
 </launch>

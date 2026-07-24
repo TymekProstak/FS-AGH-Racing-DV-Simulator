@@ -1,0 +1,22 @@
+<launch>
+  <arg name="sim_time" default="-1"/>
+
+  <include file="$(find lem_simulator)/launch/_simulator.launch">
+    <arg name="param_file" value="$(find lem_simulator)/config/params_default_lem.json"/>
+    <arg name="cones_file" value="$(find lem_simulator)/tracks/acceleration_cones.csv"/>
+    <arg name="centerline_file" value="$(find lem_simulator)/tracks/acceleration_centerline.csv"/>
+    <arg name="log_file" value="$(find lem_simulator)/logs/acceleration.csv"/>
+    <arg name="sim_time" value="$(arg sim_time)"/>
+    <arg name="initial_x_m" value="0.0"/>
+    <arg name="initial_y_m" value="0.0"/>
+    <arg name="initial_yaw_rad" value="0.0"/>
+  </include>
+
+  <include file="$(find dv_slam)/launch/slam.launch"/>
+  <include file="$(find dv_path_planning)/launch/path_planning.launch">
+    <arg name="mission" value="acceleration"/>
+    <arg name="track_length" value="150.0"/>
+    <arg name="braking_distance" value="140.0"/>
+  </include>
+  <include file="$(find dv_control)/launch/control.launch"/>
+</launch>

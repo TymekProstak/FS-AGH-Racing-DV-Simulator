@@ -1,0 +1,31 @@
+<launch>
+  <arg name="param_file"/>
+  <arg name="cones_file"/>
+  <arg name="centerline_file"/>
+  <arg name="log_file"/>
+  <arg name="sim_time" default="-1"/>
+  <arg name="use_lidar" default="false"/>
+  <arg name="use_camera" default="false"/>
+  <arg name="use_fusion" default="true"/>
+  <arg name="initial_x_m" default="0.0"/>
+  <arg name="initial_y_m" default="0.0"/>
+  <arg name="initial_yaw_rad" default="0.0"/>
+
+  <node pkg="lem_simulator"
+        type="sim_loop_node"
+        name="lem_simulation_node"
+        required="true"
+        output="screen">
+    <param name="param_file" value="$(arg param_file)"/>
+    <param name="cones_file" value="$(arg cones_file)"/>
+    <param name="centerline_file" value="$(arg centerline_file)"/>
+    <param name="log_file" value="$(arg log_file)"/>
+    <param name="sim_time" value="$(arg sim_time)"/>
+    <param name="use_lidar" value="$(arg use_lidar)"/>
+    <param name="use_camera" value="$(arg use_camera)"/>
+    <param name="use_fusion" value="$(arg use_fusion)"/>
+    <param name="initial_x_m" value="$(arg initial_x_m)"/>
+    <param name="initial_y_m" value="$(arg initial_y_m)"/>
+    <param name="initial_yaw_rad" value="$(arg initial_yaw_rad)"/>
+  </node>
+</launch>

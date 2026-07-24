@@ -1,0 +1,32 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/tymek/Desktop/sim_dv/RTE/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/dv_acc_launch_control/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/dv_brake_test/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/dv_control/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/dv_graphslam/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/dv_odometry/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/dv_path_planning/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/dv_skidpad_control/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/dv_slam/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/lem_simulator/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/urinay_blind/include/**",
+        "/home/tymek/Desktop/sim_dv/RTE/src/urinay_color/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

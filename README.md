@@ -87,25 +87,72 @@ The ROS message definitions used by the simulator are stored in
 with the project. The repository is a self-contained simulator product with
 its complete ROS message interface.
 
+Controller-development (`*_no_pp.launch`) launches additionally require:
+
+- `dv_control`
+
 Full-pipeline launches additionally require:
 
 - `dv_slam`
 - `dv_path_planning`
 - `dv_control`
 
-Install dependencies and build:
+## Setup workspace
+
+This repository is a ROS package and must be placed inside the `src` directory
+of a catkin workspace. Do not run `catkin build` directly from the repository
+directory.
+
+```bash
+mkdir -p ~/dv_ws/src
+git clone git@github.com:TymekProstak/FS-AGH-Racing-DV-Simulator.git \
+  ~/dv_ws/src/FS-AGH-Racing-DV-Simulator
+```
+
+It is highly recommended to set up
+[GitHub SSH keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+before cloning through SSH.
+
+If the repository is already cloned elsewhere, link it into the workspace
+instead:
+
+```bash
+mkdir -p ~/dv_ws/src
+ln -s ~/Desktop/FS-AGH-Racing-DV-Simulator \
+  ~/dv_ws/src/FS-AGH-Racing-DV-Simulator
+```
+
+## Install dependencies
 
 ```bash
 sudo apt update
 sudo apt install python3-catkin-tools libeigen3-dev nlohmann-json3-dev
 
-cd ~/catkin_ws
+source /opt/ros/noetic/setup.bash
+cd ~/dv_ws
 rosdep install --from-paths src --ignore-src -r -y
-catkin build lem_simulator
-source devel/setup.bash
+```
+
+## Build software
+
+```bash
+cd ~/dv_ws
+source /opt/ros/noetic/setup.bash
+catkin init
+catkin build
+
+echo "source ~/dv_ws/devel/setup.bash" >> ~/.bashrc
+source ~/.bashrc
 ```
 
 ## Quick start
+
+After a successful build, new terminals automatically load the workspace
+through `.bashrc`. To load it manually, run:
+
+```bash
+source ~/dv_ws/devel/setup.bash
+```
 
 Run FSG 2019 in centerline-based controller-development mode:
 
@@ -113,11 +160,16 @@ Run FSG 2019 in centerline-based controller-development mode:
 roslaunch lem_simulator fsg_2019_no_pp.launch sim_time:=30
 ```
 
+This mode requires `dv_control` in the same workspace.
+
 Run the complete perception → SLAM → path planning → control pipeline:
 
 ```bash
 roslaunch lem_simulator fsg_2019.launch
 ```
+
+This mode requires `dv_slam`, `dv_path_planning` and `dv_control` in the same
+workspace.
 
 Useful RViz data:
 

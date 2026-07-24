@@ -2,19 +2,18 @@
   "configById": {
     "3D!19ye74b": {
       "cameraState": {
+        "distance": 19.99999999999269,
         "perspective": true,
-        "distance": 19.99999999999518,
-        "phi": 78.6614746211661,
-        "thetaOffset": 88.34645667886913,
-        "targetOffset": [
-          12.743638952719964,
-          -1.8727989981234308,
-          7.178670496228511e-16
-        ],
+        "phi": 72.09077755339351,
         "target": [
           0,
           0,
           0
+        ],
+        "targetOffset": [
+          5.915106831550738,
+          -4.584693611215033,
+          -2.1225799739389887e-15
         ],
         "targetOrientation": [
           0,
@@ -22,6 +21,7 @@
           0,
           1
         ],
+        "thetaOffset": 96.38954638468181,
         "fovy": 45,
         "near": 0.5,
         "far": 5000
@@ -85,9 +85,18 @@
       },
       "topics": {
         "/viz/cones_lidar": {
-          "visible": true
+          "visible": false
         },
         "/viz/cones_gt": {
+          "visible": true
+        },
+        "/viz/cones_vis": {
+          "visible": false
+        },
+        "/viz/bolide_model": {
+          "visible": true
+        },
+        "/path_planning/path": {
           "visible": true
         }
       },
@@ -131,7 +140,7 @@
       "path": "/debug/full_log_info.vx",
       "style": "dial",
       "minValue": 0,
-      "maxValue": 25,
+      "maxValue": 15,
       "tickInterval": 0.1,
       "showTicks": false,
       "colorMap": "red-yellow-green",

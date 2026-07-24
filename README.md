@@ -87,9 +87,9 @@ The ROS message definitions used by the simulator are stored in
 with the project. The repository is a self-contained simulator product with
 its complete ROS message interface.
 
-Controller-development (`*_no_pp.launch`) launches additionally require:
-
-- `dv_control`
+Controller-development (`*_no_pp.launch`) launches run the simulator and
+centerline publisher. To drive the car, add a control node that subscribes to
+`/dv_board/control`.
 
 Full-pipeline launches additionally require:
 
@@ -154,13 +154,14 @@ through `.bashrc`. To load it manually, run:
 source ~/dv_ws/devel/setup.bash
 ```
 
-Run FSG 2019 in centerline-based controller-development mode:
+Run FSG 2019 with the known-centerline publisher:
 
 ```bash
-roslaunch lem_simulator fsg_2019_no_pp.launch sim_time:=30
+roslaunch lem_simulator fsg_2019_no_pp.launch
 ```
 
-This mode requires `dv_control` in the same workspace.
+This standalone mode does not start a controller. The vehicle remains
+stationary until another node publishes commands on `/dv_board/control`.
 
 Run the complete perception → SLAM → path planning → control pipeline:
 
@@ -179,12 +180,52 @@ Useful RViz data:
 - `/simulation/gg_sphere`
 - TF frames `map`, `bolide_true` and `bolide_CoG`
 
+## Foxglove visualization
+
+The repository includes the
+[`sim_simple.json`](foxglove/layouts/sim_simple.json) Foxglove layout with a
+3D view, speed gauge and longitudinal/lateral acceleration plots.
+
+Install the ROS 1 Foxglove bridge once:
+
+```bash
+sudo apt update
+sudo apt install ros-noetic-foxglove-bridge
+```
+
+Start the simulator in the first terminal:
+
+```bash
+source ~/dv_ws/devel/setup.bash
+roslaunch lem_simulator fsg_2019_no_pp.launch
+```
+
+Start the bridge in the second terminal:
+
+```bash
+source ~/dv_ws/devel/setup.bash
+roslaunch --screen foxglove_bridge foxglove_bridge.launch \
+  address:=127.0.0.1 port:=8765
+```
+
+In Foxglove:
+
+1. Select **Open connection** → **Foxglove WebSocket**.
+2. Connect to `ws://localhost:8765`.
+3. Open **Layouts** → **Import from file...** and select
+   `foxglove/layouts/sim_simple.json` from this repository.
+
+The Foxglove documentation describes the
+[ROS 1 connection](https://docs.foxglove.dev/docs/getting-started/frameworks/ros1)
+and [layout import](https://docs.foxglove.dev/docs/visualization/layouts)
+flows in more detail.
+
 ## Events and launch files
 
 Every event has two entry points:
 
 - `<event>.launch` runs simulator, SLAM, path planning and control;
-- `<event>_no_pp.launch` runs simulator, centerline publisher and control.
+- `<event>_no_pp.launch` runs simulator and centerline publisher.
 
 | Event | Full pipeline | No path planning | Initial pose `(x_m, y_m, yaw_rad)` |
 |---|---|---|---|
@@ -194,9 +235,18 @@ Every event has two entry points:
 | FSG 2019 | `fsg_2019.launch` | `fsg_2019_no_pp.launch` | `(0, 0, 0)` |
 
 Each event has a `*_cones.csv` and `*_centerline.csv` file in
-[`tracks/`](tracks). FSG 2019 was digitized from the supplied cone-layout
-image. It is suitable for software-in-the-loop development, but it is not a
-survey-grade reconstruction for official lap-time comparison.
+[`tracks/`](tracks). The FSG 2019 centerline was digitized from the supplied
+reference drawing and smoothed as a closed curve. Its cone boundaries are
+generated at a constant 4 m track width, with cones spaced approximately 2 m
+along each boundary. Regenerate both files reproducibly with:
+
+```bash
+python3 tools/generate_fsg_2019_track.py
+```
+
+The reconstructed FSG 2019 track is suitable for software-in-the-loop
+development, but it is not a survey-grade reconstruction for official
+lap-time comparison.
 
 ## Runtime configuration
 

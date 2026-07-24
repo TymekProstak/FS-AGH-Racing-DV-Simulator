@@ -1,0 +1,201 @@
+{
+  "configById": {
+    "3D!19ye74b": {
+      "cameraState": {
+        "perspective": true,
+        "distance": 19.99999999999518,
+        "phi": 78.6614746211661,
+        "thetaOffset": 88.34645667886913,
+        "targetOffset": [
+          12.743638952719964,
+          -1.8727989981234308,
+          7.178670496228511e-16
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {
+        "backgroundColor": "#120e23"
+      },
+      "transforms": {
+        "frame:map": {
+          "visible": false
+        },
+        "frame:bolide_odom_CoG": {
+          "visible": false
+        },
+        "frame:odom": {
+          "visible": false
+        },
+        "frame:bolide_CoG": {
+          "visible": false
+        },
+        "frame:base_link": {
+          "visible": false
+        },
+        "frame:camera_base": {
+          "visible": false
+        },
+        "frame:zed2i_base_link": {
+          "visible": false
+        },
+        "frame:zed2i_camera_center": {
+          "visible": false
+        },
+        "frame:zed2i_left_camera_frame": {
+          "visible": false
+        },
+        "frame:zed2i_imu_link": {
+          "visible": false
+        },
+        "frame:zed2i_left_camera_optical_frame": {
+          "visible": false
+        },
+        "frame:zed2i_right_camera_frame": {
+          "visible": false
+        },
+        "frame:zed2i_right_camera_optical_frame": {
+          "visible": false
+        },
+        "frame:gps": {
+          "visible": false
+        },
+        "frame:os_sensor": {
+          "visible": false
+        },
+        "frame:os_imu": {
+          "visible": false
+        },
+        "frame:os_lidar": {
+          "visible": false
+        }
+      },
+      "topics": {
+        "/viz/cones_lidar": {
+          "visible": true
+        },
+        "/viz/cones_gt": {
+          "visible": true
+        }
+      },
+      "layers": {
+        "grid": {
+          "visible": false,
+          "drawBehind": false,
+          "instanceId": "b81f7761-5a17-4347-ab0a-1d9620b7dea4",
+          "layerId": "foxglove.Grid",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "synchronize": false,
+      "imageMode": {},
+      "followTf": "bolide_true",
+      "fixedFrame": "map"
+    },
+    "Gauge!38c20gy": {
+      "path": "/debug/full_log_info.vx",
+      "style": "dial",
+      "minValue": 0,
+      "maxValue": 25,
+      "tickInterval": 0.1,
+      "showTicks": false,
+      "colorMap": "red-yellow-green",
+      "colorMode": "colormap",
+      "gradient": [
+        "#0000ff",
+        "#ff00ff"
+      ],
+      "reverse": true,
+      "reverseDirection": false,
+      "foxglovePanelTitle": "Speed  [m/s]"
+    },
+    "RawMessages!1c4hctf": {
+      "defaultExpanded": false,
+      "topicPath": "/debug/full_log_info.vx.@mul(10).@round.@div(10)",
+      "fontSize": 48
+    },
+    "Plot!2gtxfnw": {
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/debug/full_log_info.ax",
+          "enabled": true,
+          "color": "#4e98e2",
+          "id": "80c16a8f-eb7b-45e1-8d29-8222a5311e7d"
+        }
+      ],
+      "foxglovePanelTitle": "acc x [m/s^2]"
+    },
+    "Plot!1m5aaij": {
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/debug/full_log_info.ay",
+          "enabled": true,
+          "color": "#4e98e2",
+          "id": "c9d1f82e-65d1-4080-80ac-b0031ab7ae4e"
+        }
+      ],
+      "foxglovePanelTitle": "acc y [m/s^2]"
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "first": "3D!19ye74b",
+    "second": {
+      "first": {
+        "first": "Gauge!38c20gy",
+        "second": "RawMessages!1c4hctf",
+        "direction": "column",
+        "splitPercentage": 50.2673796791444
+      },
+      "second": {
+        "first": "Plot!2gtxfnw",
+        "second": "Plot!1m5aaij",
+        "direction": "column"
+      },
+      "direction": "row"
+    },
+    "direction": "column",
+    "splitPercentage": 58.25892857142857
+  }
+}

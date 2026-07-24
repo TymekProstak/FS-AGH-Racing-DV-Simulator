@@ -22,5 +22,4 @@
     <param name="publish_rate" value="10.0"/>
     <param name="append_first_point_if_closed" value="true"/>
   </node>
-  <include file="$(find dv_control)/launch/control.launch"/>
 </launch>

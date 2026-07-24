@@ -113,7 +113,7 @@ install(TARGETS
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(DIRECTORY launch config tracks logs
+install(DIRECTORY launch config tracks logs foxglove
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

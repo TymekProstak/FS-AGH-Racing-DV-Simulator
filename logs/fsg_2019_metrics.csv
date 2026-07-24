@@ -1,0 +1,15 @@
+metric,value
+total_time_s,123.056
+mean_abs_lateral_error_m,0.0989711
+mean_abs_heading_error_rad,0.0496153
+mean_path_speed_mps,7.20571
+ride_metric_samples,123056
+sideslip_threshold_rad,0.15708
+sideslip_minimum_speed_mps,1
+sideslip_evaluated_time_s,117.445
+sideslip_over_threshold_time_s,0
+sideslip_over_threshold_percent,0
+top_10_driven_wheel_slip_ratio,"0.105452;0.105438;0.105265;0.105220;0.104880;0.104795;0.104299;0.104140;0.103525;0.103252"
+top_10_body_sideslip_rad,"-0.144899;-0.144899;-0.144897;-0.144896;-0.144894;-0.144891;-0.144889;-0.144884;-0.144882;-0.144874"
+top_10_lateral_error_m,"0.698276;0.698275;0.698273;0.698270;0.698267;0.698261;0.698257;0.698249;0.698243;0.698233"
+top_10_heading_error_rad,"-0.321278;-0.320166;-0.319051;-0.317932;-0.316811;-0.315687;-0.314560;-0.313430;-0.312297;-0.311160"

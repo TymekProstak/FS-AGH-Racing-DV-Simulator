@@ -205,6 +205,8 @@ The repository includes the
 [`sim_simple.json`](foxglove/layouts/sim_simple.json) Foxglove layout with a
 3D view, speed gauge and longitudinal/lateral acceleration plots.
 
+![Foxglove visualization of the simulator, planned path and vehicle telemetry](docs/images/foxglove_visualization.png)
+
 Install the ROS 1 Foxglove bridge once:
 
 ```bash

@@ -16,7 +16,9 @@ struct WheelTorqueCommand
 double control_torque_to_wheel_torque(const ParamBank& parameters,
                                       double motor_torque_nm);
 
-WheelTorqueCommand allocate_baseline_torque(
+// Used only for Control::ONE_WHEEL. FOUR_WHEEL commands bypass allocation
+// and preserve the four independently requested wheel torques.
+WheelTorqueCommand allocate_one_wheel_baseline_torque(
     const ParamBank& parameters,
     double total_motor_torque_nm);
 

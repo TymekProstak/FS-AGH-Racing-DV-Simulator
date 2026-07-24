@@ -1,0 +1,454 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{microtype}
+
+\geometry{margin=24mm}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=black
+}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\clip}{\operatorname{clip}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\Normal}{\mathcal{N}}
+
+\title{AGH Racing DV Simulator\\Model Equations}
+\author{AGH Racing}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Scope and notation}
+
+This document is the mathematical reference for the models implemented by the
+simulator. The C++ implementation remains the executable definition. All
+quantities use SI units. Wheel indices are
+\[
+  i\in\{\mathrm{FL},\mathrm{FR},\mathrm{RL},\mathrm{RR}\}.
+\]
+The vehicle body frame uses longitudinal velocity \(v_x\), lateral velocity
+\(v_y\), yaw angle \(\psi\), and yaw rate \(r=\dot{\psi}\).
+
+\section{Planar four-wheel vehicle dynamics}
+
+Tyre forces are calculated in each wheel frame and rotated into the body frame.
+The body equations are
+\begin{align}
+  \dot v_x &= \frac{\sum_i F_{x,i}^{b}-F_{\mathrm{res}}}{m}+v_y r,\\
+  \dot v_y &= \frac{\sum_i F_{y,i}^{b}}{m}-v_x r,\\
+  \dot r   &= \frac{M_z}{I_z}.
+\end{align}
+The yaw moment follows directly from the wheel positions
+\begin{equation}
+  M_z=\sum_i\left(x_iF_{y,i}^{b}-y_iF_{x,i}^{b}\right).
+\end{equation}
+Global pose kinematics are
+\begin{align}
+  \dot x &= v_x\cos\psi-v_y\sin\psi,\\
+  \dot y &= v_x\sin\psi+v_y\cos\psi,\\
+  \dot\psi &= r.
+\end{align}
+
+The longitudinal resistance model is
+\begin{align}
+  F_{\mathrm{roll}} &= C_rmg,\\
+  F_{\mathrm{drag}} &= C_d|v_x|^2,\\
+  F_{\mathrm{extra}} &= F_0+k_v|v_x|,\\
+  F_{\mathrm{res}} &=
+  \sgn(v_x)\left(F_{\mathrm{roll}}+F_{\mathrm{drag}}+
+  F_{\mathrm{extra}}\right).
+\end{align}
+Aerodynamic downforce is split between axles:
+\begin{equation}
+  F_{\mathrm{aero},F}=C_{l,F}v_x^2,\qquad
+  F_{\mathrm{aero},R}=C_{l,R}v_x^2.
+\end{equation}
+
+Each wheel has an independent angular-velocity state
+\begin{equation}
+  I_w\dot\omega_i=T_i-RF_{x,i}.
+\end{equation}
+
+\section{Control modes and torque routing}
+
+The two values of \texttt{dv\_interfaces/Control.move\_type} use separate
+paths.
+
+\subsection{\texttt{ONE\_WHEEL}}
+
+Only this mode uses baseline allocation and torque vectoring. The total motor
+torque request is
+\begin{equation}
+  T_{\Sigma}^{m} =
+  T_{\mathrm{FL}}^{m}+T_{\mathrm{FR}}^{m}+
+  T_{\mathrm{RL}}^{m}+T_{\mathrm{RR}}^{m}.
+\end{equation}
+After the fixed drivetrain ratio \(i_g\), baseline wheel torques are
+\begin{align}
+  T_{\mathrm{FL}}^{0}=T_{\mathrm{FR}}^{0}
+    &=\frac{1}{2}\lambda_F i_gT_{\Sigma}^{m},\\
+  T_{\mathrm{RL}}^{0}=T_{\mathrm{RR}}^{0}
+    &=\frac{1}{2}(1-\lambda_F)i_gT_{\Sigma}^{m},
+\end{align}
+where \(\lambda_F\) has separate configured values for drive and braking.
+Torque vectoring applies a bounded symmetric correction
+\begin{equation}
+  \begin{bmatrix}
+  T_{\mathrm{FL}}\\T_{\mathrm{FR}}\\T_{\mathrm{RL}}\\T_{\mathrm{RR}}
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+  T_{\mathrm{FL}}^{0}\\T_{\mathrm{FR}}^{0}\\
+  T_{\mathrm{RL}}^{0}\\T_{\mathrm{RR}}^{0}
+  \end{bmatrix}
+  +
+  \begin{bmatrix}
+  +\Delta T\\-\Delta T\\+\Delta T\\-\Delta T
+  \end{bmatrix}.
+\end{equation}
+
+\subsection{\texttt{FOUR\_WHEEL}}
+
+Baseline allocation and torque vectoring are bypassed. Each request is
+converted independently:
+\begin{equation}
+  T_i=i_gT_i^m.
+\end{equation}
+
+\section{MF6.1 tyre model}
+
+\subsection{Slip variables}
+
+For local wheel-frame velocities \(v_{x,i}\), \(v_{y,i}\),
+\begin{align}
+  v_{\mathrm{den}}(v_x) &=
+  \begin{cases}
+  |v_x|, & |v_x|>v_{\mathrm{th}},\\
+  \dfrac{1}{2}\left(v_{\mathrm{th}}+
+  \dfrac{v_x^2}{v_{\mathrm{th}}}\right), & |v_x|\leq v_{\mathrm{th}},
+  \end{cases}\\
+  \kappa_i &=
+  \clip\left(\frac{\omega_iR-v_{x,i}}{v_{\mathrm{den}}(v_{x,i})},
+  -0.99,0.99\right),\\
+  \alpha_i &=-\operatorname{atan2}(v_{y,i},v_{x,i,\mathrm{safe}}).
+\end{align}
+The implementation uses \(v_{\mathrm{th}}=1.5\,\mathrm{m\,s^{-1}}\).
+
+\subsection{Pure longitudinal and lateral force}
+
+For either longitudinal slip or slip angle, the common Magic Formula form is
+\begin{align}
+  \phi &= Bx-E\left(Bx-\arctan(Bx)\right),\\
+  F(x) &= D\sin\left(C\arctan\phi\right).
+\end{align}
+Load sensitivity uses
+\begin{equation}
+  df_z=\frac{F_z-F_{z0}}{F_{z0}},
+\end{equation}
+with peak factors
+\begin{equation}
+  \mu_x=\lambda_x(p_{Dx1}+p_{Dx2}df_z),\qquad
+  \mu_y=\lambda_y(p_{Dy1}+p_{Dy2}df_z),
+\end{equation}
+and
+\begin{equation}
+  D_x=\mu_xF_z,\qquad D_y=\mu_yF_z.
+\end{equation}
+The longitudinal stiffness term is
+\begin{equation}
+  K_{x\kappa}=
+  F_z(p_{Kx1}+p_{Kx2}df_z)\exp(p_{Kx3}df_z),
+  \qquad B_x=\frac{K_{x\kappa}}{C_xD_x}.
+\end{equation}
+The lateral stiffness term is
+\begin{equation}
+  K_{y\alpha}=p_{Ky1}F_{z0}
+  \sin\left(p_{Ky4}\arctan
+  \frac{F_z}{p_{Ky2}F_{z0}}\right),
+  \qquad B_y=\frac{K_{y\alpha}}{C_yD_y}.
+\end{equation}
+Horizontal shifts are applied before evaluating the curves, and the force
+value at zero physical slip is subtracted to remove the shift-induced offset.
+
+\subsection{Combined slip and force relaxation}
+
+Pure forces are limited by a friction ellipse. Define
+\begin{equation}
+  s=\sqrt{
+  \left(\frac{F_{x0}}{\mu_xF_z}\right)^2+
+  \left(\frac{F_{y0}}{\mu_yF_z}\right)^2}.
+\end{equation}
+Then
+\begin{equation}
+  (F_x,F_y)=
+  \begin{cases}
+  (F_{x0},F_{y0}), & s\leq1,\\
+  (F_{x0}/s,F_{y0}/s), & s>1.
+  \end{cases}
+\end{equation}
+
+With \(V=\sqrt{v_x^2+v_{\mathrm{th}}^2}\), the dynamic relaxation lengths are
+\begin{align}
+  L_\alpha &= \frac{Vd_y}{c_y}
+  +\frac{1}{c_y}\left|\frac{\partial F_y}{\partial\alpha}\right|,\\
+  L_\kappa &= \frac{Vd_x}{c_x}
+  +\frac{1}{c_x}\left|\frac{\partial F_x}{\partial\kappa}\right|.
+\end{align}
+For a frozen target over one integration substep,
+\begin{equation}
+  F^{+}=F+(F_{\mathrm{MF}}-F)
+  \left(1-\exp\left[-\frac{V\Delta t}{L}\right]\right).
+\end{equation}
+
+\section{Suspension and normal loads}
+
+Each wheel normal load is decomposed as
+\begin{equation}
+  N_i=N_{\mathrm{direct},i}
+  +N_{\mathrm{lat,el},i}
+  +N_{\mathrm{long,el},i}.
+\end{equation}
+The direct component contains static load, aerodynamic downforce, unsprung
+transfer, and geometric transfer.
+
+For \(L=l_f+l_r\), static axle loads are
+\begin{equation}
+  F_{z,F}^{0}=\frac{mgl_r}{L},\qquad
+  F_{z,R}^{0}=\frac{mgl_f}{L}.
+\end{equation}
+Longitudinal unsprung and geometric transfer are
+\begin{align}
+  \Delta F_{z,\mathrm{long},u}
+  &=\frac{a_x(m_{uF}h_{uF}+m_{uR}h_{uR})}{L},\\
+  \Delta F_{z,\mathrm{long},g}
+  &=k_{gF}F_{x,F,s}+k_{gR}F_{x,R,s}.
+\end{align}
+The elastic longitudinal target is
+\begin{equation}
+  \Delta F_{z,\mathrm{long},el}^{*}
+  =\frac{m_sa_xh_s}{L}
+  -\Delta F_{z,\mathrm{long},g}.
+\end{equation}
+
+Per-axle lateral direct transfer is
+\begin{align}
+  \Delta F_{z,u,j} &= \frac{m_{u,j}a_yh_{u,j}}{t_j},\\
+  \Delta F_{z,g,j} &= \frac{F_{y,j,s}h_{\mathrm{RC},j}}{t_j},
+  \qquad j\in\{F,R\}.
+\end{align}
+The remaining sprung roll moment is
+\begin{equation}
+  M_{\mathrm{roll},el}^{*}
+  =m_sa_yh_s-
+  \left(F_{y,F,s}h_{\mathrm{RC},F}
+  +F_{y,R,s}h_{\mathrm{RC},R}\right).
+\end{equation}
+It is split between axles:
+\begin{equation}
+  \Delta F_{z,el,F}^{*}
+  =\frac{\lambda_\phi M_{\mathrm{roll},el}^{*}}{t_F},
+  \qquad
+  \Delta F_{z,el,R}^{*}
+  =\frac{(1-\lambda_\phi)M_{\mathrm{roll},el}^{*}}{t_R}.
+\end{equation}
+Elastic pitch and roll loads use independent second-order dynamics:
+\begin{equation}
+  \ddot N_{\mathrm{el}}
+  =\omega^2(N_{\mathrm{el}}^{*}-N_{\mathrm{el}})
+  -2\zeta\omega\dot N_{\mathrm{el}}.
+\end{equation}
+The previous-step acceleration is used to avoid the algebraic loop
+\(N\rightarrow F_{\mathrm{tyre}}\rightarrow a\rightarrow N\).
+
+\section{Steering and drivetrain}
+
+The steering rack is a second-order system:
+\begin{equation}
+  \ddot\delta_r=
+  \omega_n^2(\delta_{\mathrm{request}}-\delta_r)
+  -2\zeta\omega_n\dot\delta_r.
+\end{equation}
+Left and right wheel angles are obtained from the rack geometry. The command
+and measured encoder include independent configured noise terms; the actuator
+command additionally includes steering bias.
+
+Each drivetrain torque state follows
+\begin{equation}
+  \dot T_i=\frac{T_{i,\mathrm{request}}-T_i}{\tau_d}.
+\end{equation}
+Per-wheel torque is limited by the configured torque bounds and by one quarter
+of the total drive or regenerative power limit.
+
+\section{Camera model}
+
+For a cone at global coordinates \((x_c,y_c,z_c)\), the planar transformation
+to the vehicle frame is
+\begin{equation}
+  \begin{bmatrix}x_b\\y_b\end{bmatrix}
+  =
+  \begin{bmatrix}
+  \cos\psi&\sin\psi\\
+  -\sin\psi&\cos\psi
+  \end{bmatrix}
+  \begin{bmatrix}x_c-x\\y_c-y\end{bmatrix}.
+\end{equation}
+Sensor offsets are added to obtain \((x_s,y_s,z_s)\). A cone is visible when
+\begin{equation}
+  x_s>0,\qquad d\leq d_{\max},\qquad
+  |y_s|\leq x_s\tan\frac{FOV_h}{2},\qquad
+  |z_s|\leq x_s\tan\frac{FOV_v}{2}.
+\end{equation}
+Position noise grows exponentially with distance:
+\begin{align}
+  RMSE(d)&=a\exp(bd),\\
+  \sigma_{xy}&=\frac{RMSE(d)}{\sqrt2},\\
+  x_{\mathrm{obs}}&=x_s+\sigma_{xy}\eta_x,\qquad
+  y_{\mathrm{obs}}=y_s+\sigma_{xy}\eta_y,
+\end{align}
+where \(\eta_x,\eta_y\sim\Normal(0,1)\).
+
+\section{Lidar model}
+
+After the body transform and sensor translation, lidar pitch is applied:
+\begin{align}
+  x_l &= \cos\theta_l\,x_{\mathrm{rel}}
+       +\sin\theta_l\,z_{\mathrm{rel}},\\
+  y_l &= y_{\mathrm{rel}},\\
+  z_l &= -\sin\theta_l\,x_{\mathrm{rel}}
+       +\cos\theta_l\,z_{\mathrm{rel}}.
+\end{align}
+The ideal planar measurement is
+\begin{equation}
+  r=\sqrt{x_l^2+y_l^2},\qquad
+  \varphi=\operatorname{atan2}(y_l,x_l).
+\end{equation}
+The visibility gate is
+\begin{equation}
+  x_l>0,\qquad r\leq r_{\max},\qquad
+  |\varphi|\leq\frac{\Phi_{\mathrm{ROI}}}{2}.
+\end{equation}
+Optional non-deskewed motion distortion contributes
+\begin{equation}
+  \sigma_{\varphi,\mathrm{motion}}
+  =\frac{|r_{\mathrm{yaw}}|T_{\mathrm{ROI}}}{\sqrt{12}},
+\end{equation}
+and total azimuth uncertainty is
+\begin{equation}
+  \sigma_{\varphi}=
+  \sqrt{\sigma_{\varphi,0}^2+
+  \sigma_{\varphi,\mathrm{motion}}^2}.
+\end{equation}
+The observed polar coordinates are
+\begin{equation}
+  r_{\mathrm{obs}}=r+\sigma_r\eta_r,\qquad
+  \varphi_{\mathrm{obs}}=\varphi+\sigma_\varphi\eta_\varphi,
+  \qquad \eta_r,\eta_\varphi\sim\Normal(0,1).
+\end{equation}
+They are converted back to Cartesian coordinates:
+\begin{equation}
+  x_{\mathrm{obs}}=r_{\mathrm{obs}}\cos\varphi_{\mathrm{obs}},
+  \qquad
+  y_{\mathrm{obs}}=r_{\mathrm{obs}}\sin\varphi_{\mathrm{obs}}.
+\end{equation}
+
+\section{Fusion and perception errors}
+
+Fusion uses lidar position. Camera colour is attached only when the same cone
+passes the camera visibility gate. Lidar-only cones have unknown colour.
+
+Optional dropout applies an independent Bernoulli trial:
+\begin{equation}
+  D_i\sim\operatorname{Bernoulli}(p_{\mathrm{drop}}).
+\end{equation}
+A detection is removed when \(D_i=1\). The number of optional false positives
+per frame is
+\begin{equation}
+  N_{\mathrm{false}}\sim\operatorname{Poisson}(\lambda_{\mathrm{false}}).
+\end{equation}
+Their forward range and lateral position are sampled uniformly inside the
+configured region.
+
+Camera and lidar execution latency are sampled as
+\begin{equation}
+  t_{\mathrm{exec}}=
+  \left|\Normal(\mu_{\mathrm{exec}},\sigma_{\mathrm{exec}}^2)\right|.
+\end{equation}
+
+\section{IMU}
+
+Accelerometer and gyroscope biases are independent random walks:
+\begin{equation}
+  b_{k+1}=b_k+\sigma_{\mathrm{rw}}\sqrt{\Delta t}\,\eta_k,
+  \qquad \eta_k\sim\Normal(0,1).
+\end{equation}
+Each channel uses a first-order bandwidth model:
+\begin{equation}
+  \tau=\frac{1}{2\pi f_c},\qquad
+  \alpha=\frac{\Delta t}{\tau+\Delta t},\qquad
+  y_k^f=y_{k-1}^f+\alpha(y_k-y_{k-1}^f).
+\end{equation}
+The sampled output is
+\begin{equation}
+  y_k^{m}=y_k^f+b_k+\sigma_n\eta_k.
+\end{equation}
+Accelerometer and gyroscope have independent acquisition clocks. Output
+messages contain the arithmetic mean of the configured number of buffered
+samples.
+
+\section{State estimator}
+
+For each estimated state component \(q\),
+\begin{align}
+  b_{q,k+1}&=b_{q,k}+\sigma_{q,\mathrm{rw}}
+  \sqrt{\Delta t}\,\eta_{b,k},\\
+  \hat q_k&=q_k+b_{q,k}+\sigma_{q,n}\eta_{n,k}.
+\end{align}
+Position and yaw use one delayed queue; body velocities use another. The
+estimate is published only after the configured calibration interval and when
+both delayed samples are available.
+
+\section{Discrete timing}
+
+For device period \(T_d\) and physics step \(\Delta t\),
+\begin{equation}
+  N_d=\max\left(1,\operatorname{round}\frac{T_d}{\Delta t}\right).
+\end{equation}
+A device runs when
+\begin{equation}
+  k\bmod N_d=k_{\mathrm{phase}}.
+\end{equation}
+Independent randomized phases avoid artificial simultaneous sampling.
+Sampled values are held in caches and computation or transport latency is
+represented by queues indexed by their ready simulation step.
+
+\section{Implementation references}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Model & Source\\
+\midrule
+Body and wheel dynamics & \texttt{src\_helpers/double\_track.cpp}\\
+Tyres & \texttt{src\_helpers/tire\_model.cpp}\\
+Suspension & \texttt{src\_helpers/suspension.cpp}\\
+Steering & \texttt{src\_helpers/steering\_system.cpp}\\
+Torque routing & \texttt{src\_helpers/torque\_allocation.cpp}\\
+Camera, lidar, fusion & \texttt{src\_helpers/cone\_detector.cpp}\\
+IMU & \texttt{src\_helpers/imu\_simulator.cpp}\\
+Estimator and timing & \texttt{sim\_loop.cpp}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

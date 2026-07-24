@@ -55,9 +55,9 @@ void ImuSimulator::read_accelerometer(
     const double sqrt_dt = std::sqrt(accelerometer_period_s_);
     const double bias_rw =
         parameters.get("imu_accelerometer_bias_rw_std");
-    accelerometer_bias_x_ += bias_rw * sqrt_dt * gaussian_noise();
-    accelerometer_bias_y_ += bias_rw * sqrt_dt * gaussian_noise();
-    accelerometer_bias_z_ += bias_rw * sqrt_dt * gaussian_noise();
+    accelerometer_bias_x_ += bias_rw * sqrt_dt * standard_normal_noise();
+    accelerometer_bias_y_ += bias_rw * sqrt_dt * standard_normal_noise();
+    accelerometer_bias_z_ += bias_rw * sqrt_dt * standard_normal_noise();
 
     const double roll = parameters.get("roll_inclination_of_world");
     const double pitch = parameters.get("pitch_inclination_of_world");
@@ -101,11 +101,11 @@ void ImuSimulator::read_accelerometer(
     const double noise_std =
         parameters.get("imu_accelerometer_noise_std");
     accelerometer_x_ = filtered_accelerometer_x_ +
-        accelerometer_bias_x_ + noise_std * gaussian_noise();
+        accelerometer_bias_x_ + noise_std * standard_normal_noise();
     accelerometer_y_ = filtered_accelerometer_y_ +
-        accelerometer_bias_y_ + noise_std * gaussian_noise();
+        accelerometer_bias_y_ + noise_std * standard_normal_noise();
     accelerometer_z_ = filtered_accelerometer_z_ +
-        accelerometer_bias_z_ + noise_std * gaussian_noise();
+        accelerometer_bias_z_ + noise_std * standard_normal_noise();
     has_accelerometer_sample_ = true;
 }
 
@@ -115,9 +115,9 @@ void ImuSimulator::read_gyroscope(
 {
     const double sqrt_dt = std::sqrt(gyroscope_period_s_);
     const double bias_rw = parameters.get("imu_gyroscope_bias_rw_std");
-    gyroscope_bias_x_ += bias_rw * sqrt_dt * gaussian_noise();
-    gyroscope_bias_y_ += bias_rw * sqrt_dt * gaussian_noise();
-    gyroscope_bias_z_ += bias_rw * sqrt_dt * gaussian_noise();
+    gyroscope_bias_x_ += bias_rw * sqrt_dt * standard_normal_noise();
+    gyroscope_bias_y_ += bias_rw * sqrt_dt * standard_normal_noise();
+    gyroscope_bias_z_ += bias_rw * sqrt_dt * standard_normal_noise();
 
     constexpr double true_x = 0.0;
     constexpr double true_y = 0.0;
@@ -144,11 +144,11 @@ void ImuSimulator::read_gyroscope(
 
     const double noise_std = parameters.get("imu_gyroscope_noise_std");
     gyroscope_x_ = filtered_gyroscope_x_ +
-        gyroscope_bias_x_ + noise_std * gaussian_noise();
+        gyroscope_bias_x_ + noise_std * standard_normal_noise();
     gyroscope_y_ = filtered_gyroscope_y_ +
-        gyroscope_bias_y_ + noise_std * gaussian_noise();
+        gyroscope_bias_y_ + noise_std * standard_normal_noise();
     gyroscope_z_ = filtered_gyroscope_z_ +
-        gyroscope_bias_z_ + noise_std * gaussian_noise();
+        gyroscope_bias_z_ + noise_std * standard_normal_noise();
     has_gyroscope_sample_ = true;
 }
 
@@ -191,7 +191,7 @@ std::optional<dv_interfaces::Imu> ImuSimulator::sample_output()
     return message;
 }
 
-double ImuSimulator::gaussian_noise()
+double ImuSimulator::standard_normal_noise()
 {
     return standard_normal_(noise_rng_);
 }

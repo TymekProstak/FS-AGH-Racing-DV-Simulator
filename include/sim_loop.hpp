@@ -41,7 +41,7 @@
 namespace lem_dynamics_sim_
 {
 
-struct GaussianStateEstimate
+struct StateEstimate
 {
     double x{};
     double y{};
@@ -51,7 +51,7 @@ struct GaussianStateEstimate
     double yaw_rate{};
 };
 
-struct GaussianPoseSample
+struct StatePoseSample
 {
     double x = 0.0;
     double y = 0.0;
@@ -59,7 +59,7 @@ struct GaussianPoseSample
     double yaw_rate = 0.0;
 };
 
-struct GaussianSpeedSample
+struct StateSpeedSample
 {
     double vx = 0.0;
     double vy = 0.0;
@@ -152,11 +152,12 @@ private:
 
     bool first_control_input_received_ = false;
 
-    GaussianStateEstimate state_estimate_;
-    ValueCache<GaussianPoseSample> ready_estimated_pose_;
-    ValueCache<GaussianSpeedSample> ready_estimated_speed_;
-    DelayedQueue<GaussianPoseSample> pending_estimated_poses_;
-    DelayedQueue<GaussianSpeedSample> pending_estimated_speeds_;
+    StateEstimate state_estimate_;
+    ValueCache<StatePoseSample> ready_estimated_pose_;
+    ValueCache<StateSpeedSample> ready_estimated_speed_;
+    DelayedQueue<StatePoseSample> pending_estimated_poses_;
+    DelayedQueue<StateSpeedSample> pending_estimated_speeds_;
+    ValueCache<StateEstimate> vcu_state_estimate_cache_;
 
     double estimator_bias_x_ = 0.0;
     double estimator_bias_y_ = 0.0;
@@ -227,7 +228,7 @@ private:
     void flush_perception_queues_();
     void stop_when_time_limit_reached_();
 
-    void publish_state_estimate_(const GaussianStateEstimate& estimate);
+    void publish_state_estimate_(const StateEstimate& estimate);
 
     void publish_cones_(const Track& cones, ros::Time timestamp);
     void publish_lidar_cones_(const Track& cones, ros::Time timestamp);
@@ -239,7 +240,7 @@ private:
     void publish_ready_camera_frames_from_queue_();
     void publish_ready_lidar_frames_from_queue_();
 
-    void update_gaussian_state_estimator_();
+    void update_state_estimator_();
     void read_control_by_dv_board_if_due();
     void read_steer_by_orin_if_due_();
 
@@ -257,7 +258,7 @@ private:
     void publish_steer_if_due_();
 
     void publish_estimated_vehicle_tf_(
-        const GaussianStateEstimate& estimate);
+        const StateEstimate& estimate);
     void publish_bolid_tf_true();
     void pub_full_state_();
     void publish_bolid_marker_();

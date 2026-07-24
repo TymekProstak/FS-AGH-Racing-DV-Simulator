@@ -3,7 +3,7 @@
   <name>lem_simulator</name>
   <version>0.0.0</version>
   <description>
-    Formula Student Driverless vehicle dynamics and sensor simulator.
+    AGH Racing Formula Student Driverless vehicle, sensor and perception simulator.
   </description>
 
   <maintainer email="timiprostak@gmail.com">Tymek Prostak</maintainer>

@@ -1,11 +1,12 @@
-# Bundled simulator interfaces
+# Simulator interfaces
 
-This directory contains the smallest subset of `dv_interfaces` required by
-LEM Simulator. The message definitions were selected from the supplied
-`dv_interfaces.zip`; controller/debug-only messages are intentionally not
-bundled.
+This directory defines the ROS messages used by AGH Racing DV Simulator:
 
-When a workspace already provides `dv_interfaces`, CMake uses that package so
-the rest of the Driverless stack keeps a single interface owner. Otherwise
-LEM Simulator generates these compatible message headers as part of its own
+- vehicle control commands;
+- DV-board measurements;
+- IMU measurements;
+- cone detections;
+- complete simulated vehicle state.
+
+The message headers are generated together with the simulator during every
 build.

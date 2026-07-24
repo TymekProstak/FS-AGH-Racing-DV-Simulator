@@ -260,7 +260,7 @@ void Simulation_lem_ros_node::step()
 void Simulation_lem_ros_node::update_sensor_pipeline_()
 {
     read_wheel_encoder_if_due_();
-    update_gaussian_state_estimator_();
+    update_state_estimator_();
     update_imu_();
     main_read_imu_if_due_();
     shoot_camera_or_enqueue_if_due_();
@@ -436,7 +436,7 @@ void Simulation_lem_ros_node::configure_timers_()
 }
 
 // dv board reads control topic at fixed cadence
-void Simulation_lem_ros_node::update_gaussian_state_estimator_()
+void Simulation_lem_ros_node::update_state_estimator_()
 {
     const bool estimator_due =
         state_estimator_timer_.due(step_number_);
@@ -463,7 +463,7 @@ void Simulation_lem_ros_node::update_gaussian_state_estimator_()
             P_.get("state_estimator_yaw_rate_bias_rw") *
             sqrt_dt * random_noise_generator_();
 
-        GaussianPoseSample pose_out;
+        StatePoseSample pose_out;
         pose_out.x = state_.x + estimator_bias_x_ +
             P_.get("state_estimator_position_noise_std") *
                 random_noise_generator_();
@@ -481,7 +481,7 @@ void Simulation_lem_ros_node::update_gaussian_state_estimator_()
         pending_estimated_poses_.push(
             step_number_ + estimator_pose_yaw_delay_steps_, pose_out);
 
-        GaussianSpeedSample speed_out;
+        StateSpeedSample speed_out;
         speed_out.vx = state_.vx + estimator_bias_vx_ +
             P_.get("state_estimator_speed_noise_std") *
                 random_noise_generator_();
@@ -520,6 +520,9 @@ void Simulation_lem_ros_node::update_gaussian_state_estimator_()
     state_estimate_.vx = speed.vx;
     state_estimate_.vy = speed.vy;
 
+    // The VCU/main-board unit receives the same sampled estimate that is
+    // published to the autonomous stack on /ins/pose.
+    vcu_state_estimate_cache_.write(state_estimate_);
     publish_state_estimate_(state_estimate_);
     publish_estimated_vehicle_tf_(state_estimate_);
 }
@@ -651,8 +654,11 @@ void Simulation_lem_ros_node::send_dv_board_to_main_if_due_()
             static_cast<double>(last_input_read_by_dv_board.torque_FR) +
             static_cast<double>(last_input_read_by_dv_board.torque_RL) +
             static_cast<double>(last_input_read_by_dv_board.torque_RR);
+        // Baseline front/rear allocation belongs exclusively to ONE_WHEEL.
+        // FOUR_WHEEL requests are copied independently in the branch below.
         dv_board_to_main_torque_command_ =
-            allocate_baseline_torque(P_, total_motor_torque_nm);
+            allocate_one_wheel_baseline_torque(
+                P_, total_motor_torque_nm);
         has_dv_board_to_main_command_ = true;
         return;
     }
@@ -752,7 +758,7 @@ double Simulation_lem_ros_node::random_noise_generator_() const {
 }
 
 void Simulation_lem_ros_node::publish_state_estimate_(
-    const GaussianStateEstimate& estimate)
+    const StateEstimate& estimate)
 {
     nav_msgs::Odometry odom_msg{};
     odom_msg.header.stamp = ros::Time::now();
@@ -1026,7 +1032,7 @@ void Simulation_lem_ros_node::publish_bolid_tf_true() {
 }
 
 void Simulation_lem_ros_node::publish_estimated_vehicle_tf_(
-    const GaussianStateEstimate& estimate)
+    const StateEstimate& estimate)
 {
 
     if (!pub_state_estimate_) {

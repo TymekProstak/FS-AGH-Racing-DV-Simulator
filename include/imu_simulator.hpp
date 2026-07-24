@@ -29,7 +29,7 @@ private:
     void read_gyroscope(const State& state,
                         const ParamBank& parameters);
     std::optional<dv_interfaces::Imu> sample_output();
-    double gaussian_noise();
+    double standard_normal_noise();
 
     PeriodicTimer accelerometer_timer_;
     PeriodicTimer gyroscope_timer_;

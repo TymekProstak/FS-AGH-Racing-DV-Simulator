@@ -671,29 +671,29 @@ inline ParamBank build_param_bank(const nlohmann::json& J)
   P.add("main_imu_read_time_step", JgetReqSafe(J, "main.main_imu_read_time_step"));
 
   P.add("state_estimator_position_noise_std", JgetReqSafe(
-      J, "gaussian_state_estimator.position_noise_std_m"));
+      J, "state_estimator.position_noise_std_m"));
   P.add("state_estimator_yaw_noise_std", JgetReqSafe(
-      J, "gaussian_state_estimator.yaw_noise_std_rad"));
+      J, "state_estimator.yaw_noise_std_rad"));
   P.add("state_estimator_yaw_rate_noise_std", JgetReqSafe(
-      J, "gaussian_state_estimator.yaw_rate_noise_std_rad_per_s"));
+      J, "state_estimator.yaw_rate_noise_std_rad_per_s"));
   P.add("state_estimator_speed_noise_std", JgetReqSafe(
-      J, "gaussian_state_estimator.speed_noise_std_mps"));
+      J, "state_estimator.speed_noise_std_mps"));
   P.add("state_estimator_frequency_hz", JgetReqSafe(
-      J, "gaussian_state_estimator.frequency_hz"));
+      J, "state_estimator.frequency_hz"));
   P.add("calibration_time", JgetReqSafe(
-      J, "gaussian_state_estimator.calibration_time_s"));
+      J, "state_estimator.calibration_time_s"));
   P.add("state_estimator_pose_yaw_delay_s", JgetReqSafe(
-      J, "gaussian_state_estimator.pose_yaw_delay_s"));
+      J, "state_estimator.pose_yaw_delay_s"));
   P.add("state_estimator_speed_delay_s", JgetReqSafe(
-      J, "gaussian_state_estimator.speed_delay_s"));
+      J, "state_estimator.speed_delay_s"));
   P.add("state_estimator_position_bias_rw", JgetReqSafe(
-      J, "gaussian_state_estimator.position_bias_rw_std_m_sqrt_s"));
+      J, "state_estimator.position_bias_rw_std_m_sqrt_s"));
   P.add("state_estimator_yaw_bias_rw", JgetReqSafe(
-      J, "gaussian_state_estimator.yaw_bias_rw_std_rad_sqrt_s"));
+      J, "state_estimator.yaw_bias_rw_std_rad_sqrt_s"));
   P.add("state_estimator_speed_bias_rw", JgetReqSafe(
-      J, "gaussian_state_estimator.speed_bias_rw_std_mps_sqrt_s"));
+      J, "state_estimator.speed_bias_rw_std_mps_sqrt_s"));
   P.add("state_estimator_yaw_rate_bias_rw", JgetReqSafe(
-      J, "gaussian_state_estimator.yaw_rate_bias_rw_std_rad_per_s_sqrt_s"));
+      J, "state_estimator.yaw_rate_bias_rw_std_rad_per_s_sqrt_s"));
 
   P.add("imu_accelerometer_rate_hz", JgetReqSafe(J, "imu.accelerometer_rate_hz"));
   P.add("imu_gyroscope_rate_hz", JgetReqSafe(J, "imu.gyroscope_rate_hz"));

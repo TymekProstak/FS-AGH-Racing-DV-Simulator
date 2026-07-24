@@ -17,48 +17,40 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-find_package(dv_interfaces QUIET)
-
 find_package(Eigen3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
-set(DV_INTERFACES_EXPORTED_TARGETS)
-set(DV_INTERFACES_INCLUDE_DIRS)
+message(STATUS "AGH Racing DV Simulator: generating project interfaces")
 
-if(dv_interfaces_FOUND)
-  message(STATUS "LEM Simulator: using workspace dv_interfaces")
-  set(DV_INTERFACES_EXPORTED_TARGETS ${dv_interfaces_EXPORTED_TARGETS})
-  set(DV_INTERFACES_INCLUDE_DIRS ${dv_interfaces_INCLUDE_DIRS})
-else()
-  message(STATUS "LEM Simulator: generating bundled minimal dv_interfaces")
+set(AGH_RACING_DV_SIMULATOR_PROJECT_NAME ${PROJECT_NAME})
+set(PROJECT_NAME dv_interfaces)
+set(dv_interfaces_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-  set(LEM_SIMULATOR_PROJECT_NAME ${PROJECT_NAME})
-  set(PROJECT_NAME dv_interfaces)
-  set(dv_interfaces_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+add_message_files(
+  NOINSTALL
+  DIRECTORY interfaces/dv_interfaces/msg
+  FILES
+    Pos.msg
+    Imu.msg
+    Cone.msg
+    Cones.msg
+    Control.msg
+    DV_board.msg
+    full_state.msg
+)
 
-  add_message_files(
-    NOINSTALL
-    DIRECTORY interfaces/dv_interfaces/msg
-    FILES
-      Pos.msg
-      Imu.msg
-      Cone.msg
-      Cones.msg
-      Control.msg
-      DV_board.msg
-      full_state.msg
-  )
+generate_messages(
+  DEPENDENCIES
+    std_msgs
+  LANGS
+    gencpp
+    genpy
+)
 
-  generate_messages(
-    DEPENDENCIES
-      std_msgs
-  )
-
-  set(DV_INTERFACES_EXPORTED_TARGETS
-      ${dv_interfaces_EXPORTED_TARGETS})
-  set(PROJECT_NAME ${LEM_SIMULATOR_PROJECT_NAME})
-  catkin_destinations()
-endif()
+set(DV_INTERFACES_EXPORTED_TARGETS
+    ${dv_interfaces_EXPORTED_TARGETS})
+set(PROJECT_NAME ${AGH_RACING_DV_SIMULATOR_PROJECT_NAME})
+catkin_destinations()
 
 catkin_package(
   INCLUDE_DIRS include
@@ -68,7 +60,6 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${DV_INTERFACES_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
 )
 

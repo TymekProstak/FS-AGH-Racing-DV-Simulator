@@ -126,7 +126,7 @@
     "main_computation_delay_s": 0.002,
     "main_imu_read_time_step": 0.01
   },
-  "gaussian_state_estimator": {
+  "state_estimator": {
     "position_noise_std_m": 0.05,
     "yaw_noise_std_rad": 0.005,
     "yaw_rate_noise_std_rad_per_s": 0.01,

@@ -123,7 +123,7 @@ Useful RViz data:
 
 - `/viz/cones_gt`
 - `/viz/cones_lidar` or `/viz/cones_vis`
-- `/viz/bolide_model`
+- `/viz/bolide_model` — vehicle body and per-wheel normal-load arrows
 - `/simulation/gg_sphere`
 - TF frames `map`, `bolide_true` and `bolide_CoG`
 

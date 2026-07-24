@@ -1,6 +1,7 @@
 // sim_loop.cpp
 
 #include "sim_loop.hpp"
+#include <array>
 #include <iostream>
 #include <exception>
 #include <algorithm>
@@ -114,7 +115,9 @@ Simulation_lem_ros_node::Simulation_lem_ros_node(ros::NodeHandle& nh,
         pub_markers_cones_vis_ = nh.advertise<visualization_msgs::MarkerArray>("/viz/cones_vis", 1);
         pub_markers_cones_lidar_ = nh.advertise<visualization_msgs::MarkerArray>("/viz/cones_lidar", 1);
         pub_log_full_ = nh.advertise<dv_interfaces::full_state>("/debug/full_log_info", 1);
-        pub_marker_bolid_ = nh.advertise<visualization_msgs::Marker>("/viz/bolide_model", 1);
+        // One vehicle body marker plus four wheel-load arrows are published
+        // together on this topic.
+        pub_marker_bolid_ = nh.advertise<visualization_msgs::Marker>("/viz/bolide_model", 10);
         pub_gg_sphere_marker_ = nh.advertise<visualization_msgs::Marker>("/simulation/gg_sphere", 1);
         pub_steer_status_ = nh.advertise<std_msgs::Bool>("/servo_node/cubemars/initialization_complete", 1, true);
         std::cout << "[INIT][OK] ROS I/O ready." << std::endl;
@@ -1239,18 +1242,25 @@ void Simulation_lem_ros_node::publish_bolid_marker_()
         return;
     }
 
+    constexpr double kCarLengthM = 2.925;
+    constexpr double kCarWidthM = 1.452;
+    constexpr double kCarHeightM = 1.452;
+    constexpr double kArrowBaseClearanceM = 0.05;
+
+    const ros::Time stamp = ros::Time::now();
+
     visualization_msgs::Marker car;
     car.header.frame_id = "bolide_true";        // auto porusza się z TF pojazdu
-    car.header.stamp    = ros::Time::now();
+    car.header.stamp    = stamp;
     car.ns   = "bolide";
     car.id   = 0;
     car.type = visualization_msgs::Marker::CUBE;
     car.action = visualization_msgs::Marker::ADD;
 
     // --- rozmiar pojazdu FS (około) ---
-    car.scale.x = 2.925;    // długość (m)
-    car.scale.y = 1.452;    // szerokość (m)
-    car.scale.z = 1.452;    // wysokość (m)
+    car.scale.x = kCarLengthM;    // długość (m)
+    car.scale.y = kCarWidthM;     // szerokość (m)
+    car.scale.z = kCarHeightM;    // wysokość (m)
 
     // --- pozycja ---
     car.pose.position.x = 0.0;      // środek ciężkości = TF origin
@@ -1267,6 +1277,72 @@ void Simulation_lem_ros_node::publish_bolid_marker_()
     car.lifetime = ros::Duration(0.1);
 
     pub_marker_bolid_.publish(car);
+
+    // Vertical arrows visualize the instantaneous normal load at every wheel.
+    // A load equal to the mean static wheel load produces a one-metre arrow.
+    const double mean_static_wheel_load_n =
+        P_.get("m") * P_.get("g") / 4.0;
+    const double arrow_base_z_m =
+        kCarHeightM + kArrowBaseClearanceM;
+
+    struct WheelLoadMarker
+    {
+        int id;
+        double x_m;
+        double y_m;
+        double normal_load_n;
+    };
+
+    const std::array<WheelLoadMarker, 4> wheel_loads{{
+        {0,  P_.get("l_f"),  P_.get("t_front") / 2.0, state_.N_fl},
+        {1,  P_.get("l_f"), -P_.get("t_front") / 2.0, state_.N_fr},
+        {2, -P_.get("l_r"),  P_.get("t_rear") / 2.0, state_.N_rl},
+        {3, -P_.get("l_r"), -P_.get("t_rear") / 2.0, state_.N_rr},
+    }};
+
+    for (const WheelLoadMarker& wheel : wheel_loads) {
+        const double finite_load_n =
+            std::isfinite(wheel.normal_load_n)
+                ? std::max(0.0, wheel.normal_load_n)
+                : 0.0;
+        const double arrow_length_m =
+            finite_load_n / mean_static_wheel_load_n;
+
+        visualization_msgs::Marker arrow;
+        arrow.header.frame_id = "bolide_true";
+        arrow.header.stamp = stamp;
+        arrow.ns = "wheel_normal_load";
+        arrow.id = wheel.id;
+        arrow.type = visualization_msgs::Marker::ARROW;
+        arrow.action = visualization_msgs::Marker::ADD;
+
+        geometry_msgs::Point start;
+        start.x = wheel.x_m;
+        start.y = wheel.y_m;
+        start.z = arrow_base_z_m;
+
+        geometry_msgs::Point end = start;
+        end.z += arrow_length_m;
+
+        arrow.points.push_back(start);
+        arrow.points.push_back(end);
+
+        // For a two-point ARROW marker these are shaft diameter, head
+        // diameter and head length, respectively.
+        arrow.scale.x = 0.06;
+        arrow.scale.y = 0.14;
+        arrow.scale.z = std::min(0.18, 0.4 * arrow_length_m);
+
+        arrow.color.r = 1.0f;
+        arrow.color.g = 0.25f;
+        arrow.color.b = 0.05f;
+        arrow.color.a = 1.0f;
+
+        arrow.lifetime = ros::Duration(0.1);
+        arrow.frame_locked = true;
+
+        pub_marker_bolid_.publish(arrow);
+    }
 }
 
 void Simulation_lem_ros_node::publish_dv_board_data_if_due_()

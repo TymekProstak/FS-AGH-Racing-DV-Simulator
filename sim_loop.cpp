@@ -103,7 +103,7 @@ Simulation_lem_ros_node::Simulation_lem_ros_node(ros::NodeHandle& nh,
     std::cout << "[INIT] Initializing ROS I/O (subscribers/publishers)..." << std::endl;
     try {
         sub_control_ = nh.subscribe<dv_interfaces::Control>(
-            "/dv_board/control", 1, &Simulation_lem_ros_node::dv_control_callback, this, ros::TransportHints().tcpNoDelay());
+            "/dv_board/control", 1, &Simulation_lem_ros_node::control_command_callback, this, ros::TransportHints().tcpNoDelay());
         pub_state_estimate_ =
             nh.advertise<nav_msgs::Odometry>("/ins/pose", 1);
         pub_imu_   = nh.advertise<dv_interfaces::Imu>("/dv_board/imu", 1);
@@ -142,6 +142,10 @@ Simulation_lem_ros_node::Simulation_lem_ros_node(ros::NodeHandle& nh,
         std::cerr << "[INIT][FAIL] ROS I/O init failed. what(): " << e.what() << std::endl;
         throw;
     }
+
+    // Connect sensor frames used by cone detections to the estimated vehicle
+    // pose. These fixed joints mirror dv_bolid_description/LEM_bolid_model.
+    publish_static_vehicle_transforms_();
 
     // 5) publikacja conów z toru (ground truth) o wiecznym life-time
     std::cout << "[INIT] Publishing GT cones markers..." << std::endl;
@@ -393,7 +397,7 @@ void Simulation_lem_ros_node::read_steer_by_orin_if_due_()
 
 // ====== ROS callback ======
 // caching last requested input from control
-void Simulation_lem_ros_node::dv_control_callback(const dv_interfaces::Control::ConstPtr& msg)
+void Simulation_lem_ros_node::control_command_callback(const dv_interfaces::Control::ConstPtr& msg)
 {
     first_control_input_received_ = true;
     control_callback_cache_.write(*msg);
@@ -1016,6 +1020,61 @@ void Simulation_lem_ros_node::publish_cones_lidar_markers_(
     last_lidar_frame_size_ = static_cast<int>(det.cones.size());
 
     pub_markers_cones_lidar_.publish(arr);
+}
+
+void Simulation_lem_ros_node::publish_static_vehicle_transforms_()
+{
+    const ros::Time stamp = ros::Time::now();
+    std::vector<geometry_msgs::TransformStamped> transforms;
+    transforms.reserve(4);
+
+    const auto fixed_transform =
+        [&stamp](const std::string& parent,
+                 const std::string& child,
+                 double x,
+                 double y,
+                 double z,
+                 double roll,
+                 double pitch,
+                 double yaw) {
+            geometry_msgs::TransformStamped transform;
+            transform.header.stamp = stamp;
+            transform.header.frame_id = parent;
+            transform.child_frame_id = child;
+            transform.transform.translation.x = x;
+            transform.transform.translation.y = y;
+            transform.transform.translation.z = z;
+
+            tf2::Quaternion rotation;
+            rotation.setRPY(roll, pitch, yaw);
+            transform.transform.rotation.x = rotation.x();
+            transform.transform.rotation.y = rotation.y();
+            transform.transform.rotation.z = rotation.z();
+            transform.transform.rotation.w = rotation.w();
+            return transform;
+        };
+
+    transforms.push_back(fixed_transform(
+        "bolide_CoG", "base_link",
+        1.7, 0.0, 0.0,
+        0.0, 0.0, 0.0));
+    transforms.push_back(fixed_transform(
+        "base_link", "camera_base",
+        -1.9, 0.0, 0.9,
+        0.0, 0.0, 0.0));
+    transforms.push_back(fixed_transform(
+        "base_link", "os_sensor",
+        -0.58, 0.0, 0.44,
+        0.0, 0.201, 0.0));
+    transforms.push_back(fixed_transform(
+        "base_link", "gps",
+        -0.5, -0.2, 0.0,
+        0.0, 0.0, 0.0));
+
+    tf_static_br_.sendTransform(transforms);
+    ROS_INFO(
+        "[INIT][TF] Published static vehicle transforms from "
+        "dv_bolid_description.");
 }
 
 void Simulation_lem_ros_node::publish_bolid_tf_true() {

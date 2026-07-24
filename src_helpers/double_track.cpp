@@ -197,7 +197,7 @@ ForceBalance computeForceBalance(const State& x, const ParamBank& P)
     const double v_abs = std::abs(x.vx);
 
     //// ------------------------------------------------------------------------
-    //// Longitudinal resistance model matched to dv_control/longitudinal_utils:
+    //// Longitudinal resistance model exposed to external controllers:
     ////
     ////     F_roll = Cr * m * g
     ////     F_drag = Cd * |vx|^2
@@ -206,9 +206,8 @@ ForceBalance computeForceBalance(const State& x, const ParamBank& P)
     ////     F_res = F_roll + F_drag + F_extra
     ////
     //// Important: I do not add downforce to rolling resistance here, because
-    //// dv_control currently uses only Cr*m*g in computeResistanceFeedforwardTorqueNm().
-    //// This keeps the simulator resistance consistent with the controller
-    //// feedforward / 1D speed MPC model.
+    //// Rolling resistance intentionally uses Cr*m*g without downforce so an
+    //// external controller can reproduce the model for feedforward or MPC.
     //// ------------------------------------------------------------------------
 
     const bool aero_enabled =

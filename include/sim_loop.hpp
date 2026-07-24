@@ -36,6 +36,7 @@
 
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <tf2_ros/transform_broadcaster.h>
 
 namespace lem_dynamics_sim_
@@ -84,7 +85,7 @@ public:
     const ParamBank& get_parameters() const { return P_; }
     int get_step_number() const { return step_number_; }
 
-    void dv_control_callback(const dv_interfaces::Control::ConstPtr& msg);
+    void control_command_callback(const dv_interfaces::Control::ConstPtr& msg);
 
 private:
     std::string metrics_log_file_path_;
@@ -125,6 +126,7 @@ private:
 
     ros::Publisher pub_steer_status_;
 
+    tf2_ros::StaticTransformBroadcaster tf_static_br_;
     tf2_ros::TransformBroadcaster tf_br_;
 
     ParamBank P_;
@@ -259,6 +261,7 @@ private:
 
     void publish_estimated_vehicle_tf_(
         const StateEstimate& estimate);
+    void publish_static_vehicle_transforms_();
     void publish_bolid_tf_true();
     void pub_full_state_();
     void publish_bolid_marker_();

@@ -1,15 +1,16 @@
 # AGH Racing DV Simulator
 
 Formula Student Driverless vehicle, sensor and perception simulator for ROS 1.
-AGH Racing DV Simulator provides software-in-the-loop development of an entire
-autonomous driving pipeline:
+AGH Racing DV Simulator can serve as the vehicle and sensor backend for an
+entire autonomous driving pipeline:
 
 ```text
 cone perception → SLAM → path planning → control → vehicle dynamics
 ```
 
-Two execution modes are available: the complete autonomous pipeline and a
-controller-development mode driven by a known centerline.
+The controller is always an external, optional process. The simulator only
+exposes the `/dv_board/control` input interface and never starts or depends on
+a concrete control package.
 
 ## Why this project exists
 
@@ -91,11 +92,10 @@ Controller-development (`*_no_pp.launch`) launches run the simulator and
 centerline publisher. To drive the car, add a control node that subscribes to
 `/dv_board/control`.
 
-Full-pipeline launches additionally require:
+Perception-pipeline launches additionally require:
 
 - `dv_slam`
 - `dv_path_planning`
-- `dv_control`
 
 ## Setup workspace
 
@@ -163,14 +163,14 @@ roslaunch lem_simulator fsg_2019_no_pp.launch
 This standalone mode does not start a controller. The vehicle remains
 stationary until another node publishes commands on `/dv_board/control`.
 
-Run the complete perception → SLAM → path planning → control pipeline:
+Run the simulator with perception → SLAM → path planning:
 
 ```bash
 roslaunch lem_simulator fsg_2019.launch
 ```
 
-This mode requires `dv_slam`, `dv_path_planning` and `dv_control` in the same
-workspace.
+This mode requires `dv_slam` and `dv_path_planning` in the same workspace.
+Start a controller separately only when closed-loop driving is needed.
 
 Useful RViz data:
 
@@ -178,7 +178,11 @@ Useful RViz data:
 - `/viz/cones_lidar` or `/viz/cones_vis`
 - `/viz/bolide_model` — vehicle body and per-wheel normal-load arrows
 - `/simulation/gg_sphere`
-- TF frames `map`, `bolide_true` and `bolide_CoG`
+- TF frames `map`, `bolide_true`, `bolide_CoG`, `base_link`,
+  `camera_base`, `os_sensor` and `gps`. The simulator publishes the fixed
+  vehicle-to-sensor transforms on `/tf_static`, so
+  `dv_bolid_description/description.launch` does not need to be started
+  separately.
 
 ## Foxglove visualization
 
@@ -222,12 +226,12 @@ flows in more detail.
 
 ## Events and launch files
 
-Every event has two entry points:
+Every event has two entry points. Neither one starts a controller:
 
-- `<event>.launch` runs simulator, SLAM, path planning and control;
+- `<event>.launch` runs simulator, SLAM and path planning;
 - `<event>_no_pp.launch` runs simulator and centerline publisher.
 
-| Event | Full pipeline | No path planning | Initial pose `(x_m, y_m, yaw_rad)` |
+| Event | Perception pipeline | No path planning | Initial pose `(x_m, y_m, yaw_rad)` |
 |---|---|---|---|
 | Acceleration 150 m | `acc.launch` | `acc_no_pp.launch` | `(0, 0, 0)` |
 | Skidpad | `skidpad.launch` | `skidpad_no_pp.launch` | `(0, -15, 1.570796)` |
